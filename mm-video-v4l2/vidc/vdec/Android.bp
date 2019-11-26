@@ -17,6 +17,7 @@ cc_library_shared {
         "-DALLOCATE_OUTPUT_NATIVEHANDLE",
         "-DFLEXYUV_SUPPORTED",
         "-DUSE_ION",
+        "-DVENUS_USES_LEGACY_MISR_INFO",
     ],
 
     include_dirs: [
