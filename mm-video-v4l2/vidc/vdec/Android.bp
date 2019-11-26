@@ -18,6 +18,7 @@ cc_library_shared {
         "-DFLEXYUV_SUPPORTED",
         "-DUSE_ION",
         "-D_SDM845_",
+        "-DVENUS_USES_LEGACY_MISR_INFO",
     ],
 
     include_dirs: [
