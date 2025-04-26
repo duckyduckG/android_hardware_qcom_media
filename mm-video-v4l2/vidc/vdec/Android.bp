@@ -17,6 +17,7 @@ cc_library_shared {
         "-DALLOCATE_OUTPUT_NATIVEHANDLE",
         "-DFLEXYUV_SUPPORTED",
         "-DUSE_ION",
+        "-D_SDM845_",
     ],
 
     include_dirs: [
