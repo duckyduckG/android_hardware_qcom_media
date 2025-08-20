@@ -2702,16 +2702,6 @@ OMX_ERRORTYPE  omx_video::use_input_buffer(
                 return OMX_ErrorInsufficientResources;
             }
             m_pInput_pmem[i].fd = m_pInput_ion[i].data_fd;
-#else
-            m_pInput_pmem[i].fd = open (MEM_DEVICE,O_RDWR);
-            if (m_pInput_pmem[i].fd == 0) {
-                m_pInput_pmem[i].fd = open (MEM_DEVICE,O_RDWR);
-            }
-
-            if (m_pInput_pmem[i] .fd < 0) {
-                DEBUG_PRINT_ERROR("ERROR: /dev/pmem_adsp open() Failed");
-                return OMX_ErrorInsufficientResources;
-            }
 #endif
             m_pInput_pmem[i].size = m_sInPortDef.nBufferSize;
             m_pInput_pmem[i].offset = 0;
@@ -2726,8 +2716,6 @@ OMX_ERRORTYPE  omx_video::use_input_buffer(
                     m_pInput_pmem[i].buffer = NULL;
 #ifdef USE_ION
                     free_ion_memory(&m_pInput_ion[i]);
-#else
-                    close(m_pInput_pmem[i].fd);
 #endif
                     return OMX_ErrorInsufficientResources;
                 }
@@ -2884,17 +2872,6 @@ OMX_ERRORTYPE  omx_video::use_output_buffer(
                     return OMX_ErrorInsufficientResources;
                 }
                 m_pOutput_pmem[i].fd = m_pOutput_ion[i].data_fd;
-#else
-                m_pOutput_pmem[i].fd = open (MEM_DEVICE,O_RDWR);
-
-                if (m_pOutput_pmem[i].fd == 0) {
-                    m_pOutput_pmem[i].fd = open (MEM_DEVICE,O_RDWR);
-                }
-
-                if (m_pOutput_pmem[i].fd < 0) {
-                    DEBUG_PRINT_ERROR("ERROR: /dev/pmem_adsp open() Failed");
-                    return OMX_ErrorInsufficientResources;
-                }
 #endif
                 m_pOutput_pmem[i].size = m_sOutPortDef.nBufferSize;
                 m_pOutput_pmem[i].offset = 0;
@@ -2908,8 +2885,6 @@ OMX_ERRORTYPE  omx_video::use_output_buffer(
                         m_pOutput_pmem[i].buffer = NULL;
 #ifdef USE_ION
                         free_ion_memory(&m_pOutput_ion[i]);
-#else
-                        close(m_pOutput_pmem[i].fd);
 #endif
                         return OMX_ErrorInsufficientResources;
                     }
@@ -3157,8 +3132,6 @@ OMX_ERRORTYPE omx_video::free_input_buffer(OMX_BUFFERHEADERTYPE *bufferHdr)
             m_pInput_pmem[index].buffer = NULL;
 #ifdef USE_ION
             free_ion_memory(&m_pInput_ion[index]);
-#else
-            close (m_pInput_pmem[index].fd);
 #endif
             m_pInput_pmem[index].fd = -1;
         } else if (m_pInput_pmem[index].fd > 0 && (input_use_buffer == true &&
@@ -3175,8 +3148,6 @@ OMX_ERRORTYPE omx_video::free_input_buffer(OMX_BUFFERHEADERTYPE *bufferHdr)
             }
 #ifdef USE_ION
             free_ion_memory(&m_pInput_ion[index]);
-#else
-            close (m_pInput_pmem[index].fd);
 #endif
             m_pInput_pmem[index].fd = -1;
         } else {
@@ -3223,8 +3194,6 @@ OMX_ERRORTYPE omx_video::free_output_buffer(OMX_BUFFERHEADERTYPE *bufferHdr)
             }
 #ifdef USE_ION
             free_ion_memory(&m_pOutput_ion[index]);
-#else
-            close (m_pOutput_pmem[index].fd);
 #endif
 
             m_pOutput_pmem[index].buffer = NULL;
@@ -3242,8 +3211,6 @@ OMX_ERRORTYPE omx_video::free_output_buffer(OMX_BUFFERHEADERTYPE *bufferHdr)
             }
 #ifdef USE_ION
             free_ion_memory(&m_pOutput_ion[index]);
-#else
-            close (m_pOutput_pmem[index].fd);
 #endif
             m_pOutput_pmem[index].fd = -1;
         } else {
@@ -3400,17 +3367,6 @@ OMX_ERRORTYPE  omx_video::allocate_input_buffer(
         }
 
         m_pInput_pmem[i].fd = m_pInput_ion[i].data_fd;
-#else
-        m_pInput_pmem[i].fd = open (MEM_DEVICE,O_RDWR);
-
-        if (m_pInput_pmem[i].fd == 0) {
-            m_pInput_pmem[i].fd = open (MEM_DEVICE,O_RDWR);
-        }
-
-        if (m_pInput_pmem[i].fd < 0) {
-            DEBUG_PRINT_ERROR("ERROR: /dev/pmem_adsp open() Failed");
-            return OMX_ErrorInsufficientResources;
-        }
 #endif
         m_pInput_pmem[i].size = m_sInPortDef.nBufferSize;
         m_pInput_pmem[i].offset = 0;
@@ -3424,8 +3380,6 @@ OMX_ERRORTYPE  omx_video::allocate_input_buffer(
                 m_pInput_pmem[i].buffer = NULL;
 #ifdef USE_ION
                 free_ion_memory(&m_pInput_ion[i]);
-#else
-                close(m_pInput_pmem[i].fd);
 #endif
                 return OMX_ErrorInsufficientResources;
             }
@@ -3561,16 +3515,6 @@ OMX_ERRORTYPE  omx_video::allocate_output_buffer(
             }
 
             m_pOutput_pmem[i].fd = m_pOutput_ion[i].data_fd;
-#else
-            m_pOutput_pmem[i].fd = open (MEM_DEVICE,O_RDWR);
-            if (m_pOutput_pmem[i].fd == 0) {
-                m_pOutput_pmem[i].fd = open (MEM_DEVICE,O_RDWR);
-            }
-
-            if (m_pOutput_pmem[i].fd < 0) {
-                DEBUG_PRINT_ERROR("ERROR: /dev/pmem_adsp open() failed");
-                return OMX_ErrorInsufficientResources;
-            }
 #endif
             m_pOutput_pmem[i].size = m_sOutPortDef.nBufferSize;
             m_pOutput_pmem[i].offset = 0;
@@ -3586,8 +3530,6 @@ OMX_ERRORTYPE  omx_video::allocate_output_buffer(
                     m_pOutput_pmem[i].buffer = NULL;
 #ifdef USE_ION
                     free_ion_memory(&m_pOutput_ion[i]);
-#else
-                    close (m_pOutput_pmem[i].fd);
 #endif
                     return OMX_ErrorInsufficientResources;
                 }
