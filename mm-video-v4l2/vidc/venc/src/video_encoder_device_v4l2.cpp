@@ -34,10 +34,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 #include "video_encoder_device_v4l2.h"
 #include "omx_video_encoder.h"
-#include <media/msm_vidc.h>
+#include "media/msm_vidc_utils.h"
 #ifdef USE_ION
 #include <linux/msm_ion.h>
 #endif
+#include <linux/v4l2-controls.h>
+
 #include <math.h>
 #include <media/msm_media_info.h>
 #include <cutils/properties.h>
@@ -665,7 +667,7 @@ bool venc_dev::handle_input_extradata(struct v4l2_buffer buf)
         p_extra = (OMX_OTHER_EXTRADATATYPE *) ((unsigned long)(pVirt + yuv_size + 3)&(~3));
     }
 
-    index = venc_get_index_from_fd(input_extradata_info.m_ion_dev,fd);
+    index = venc_get_index_from_fd(fd);
     char *p_extradata = input_extradata_info.uaddr + index * input_extradata_info.buffer_size;
     OMX_OTHER_EXTRADATATYPE *data = (struct OMX_OTHER_EXTRADATATYPE *)p_extradata;
     memset((void *)(data), 0, (input_extradata_info.buffer_size)); // clear stale data in current buffer
@@ -689,7 +691,7 @@ bool venc_dev::handle_input_extradata(struct v4l2_buffer buf)
             data->nDataSize = sizeof(struct msm_vidc_input_crop_payload);
             framedimension_format = (OMX_QCOM_EXTRADATA_FRAMEDIMENSION *)p_extra->data;
             payload = (struct msm_vidc_extradata_index *)(data->data);
-            payload->type = (msm_vidc_extradata_type)MSM_VIDC_EXTRADATA_INPUT_CROP;
+            payload->type = MSM_VIDC_EXTRADATA_INPUT_CROP;
             payload->input_crop.left = framedimension_format->nDecWidth;
             payload->input_crop.top = framedimension_format->nDecHeight;
             payload->input_crop.width = framedimension_format->nActualWidth;
@@ -1156,21 +1158,18 @@ OMX_ERRORTYPE venc_dev::allocate_extradata(struct extradata_buffer_info *extrada
 #ifdef USE_ION
 
     if (extradata_info->buffer_size) {
-        if (extradata_info->ion.ion_alloc_data.handle) {
-            munmap((void *)extradata_info->uaddr, extradata_info->size);
-            close(extradata_info->ion.fd_ion_data.fd);
-            venc_handle->free_ion_memory(&extradata_info->ion);
-        }
+		munmap((void *)extradata_info->uaddr, extradata_info->size);
+		close(extradata_info->ion.ion_alloc_data.fd);
+		venc_handle->free_ion_memory(&extradata_info->ion);
 
         extradata_info->size = (extradata_info->size + 4095) & (~4095);
 
-        extradata_info->ion.ion_device_fd = venc_handle->alloc_map_ion_memory(
+        extradata_info->ion.ion_alloc_data.fd = venc_handle->alloc_map_ion_memory(
                 extradata_info->size,
-                &extradata_info->ion.ion_alloc_data,
-                &extradata_info->ion.fd_ion_data, flags);
+                &extradata_info->ion.ion_alloc_data, flags);
 
 
-        if (extradata_info->ion.ion_device_fd < 0) {
+        if ((int) extradata_info->ion.ion_alloc_data.fd < 0) {
             DEBUG_PRINT_ERROR("Failed to alloc extradata memory\n");
             return OMX_ErrorInsufficientResources;
         }
@@ -1178,11 +1177,11 @@ OMX_ERRORTYPE venc_dev::allocate_extradata(struct extradata_buffer_info *extrada
         extradata_info->uaddr = (char *)mmap(NULL,
                 extradata_info->size,
                 PROT_READ|PROT_WRITE, MAP_SHARED,
-                extradata_info->ion.fd_ion_data.fd , 0);
+                extradata_info->ion.ion_alloc_data.fd , 0);
 
         if (extradata_info->uaddr == MAP_FAILED) {
             DEBUG_PRINT_ERROR("Failed to map extradata memory\n");
-            close(extradata_info->ion.fd_ion_data.fd);
+            close(extradata_info->ion.ion_alloc_data.fd);
             venc_handle->free_ion_memory(&extradata_info->ion);
             return OMX_ErrorInsufficientResources;
         }
@@ -1205,7 +1204,7 @@ void venc_dev::free_extradata(struct extradata_buffer_info *extradata_info)
     if (extradata_info->uaddr) {
         munmap((void *)extradata_info->uaddr, extradata_info->size);
         extradata_info->uaddr = NULL;
-        close(extradata_info->ion.fd_ion_data.fd);
+        close(extradata_info->ion.ion_alloc_data.fd);
         venc_handle->free_ion_memory(&extradata_info->ion);
     }
 
@@ -1213,7 +1212,7 @@ void venc_dev::free_extradata(struct extradata_buffer_info *extradata_info)
         close(extradata_info->m_ion_dev);
 
     memset(extradata_info, 0, sizeof(*extradata_info));
-    extradata_info->ion.fd_ion_data.fd = -1;
+    extradata_info->ion.ion_alloc_data.fd = -1;
     extradata_info->allocated = OMX_FALSE;
 
 #endif // USE_ION
@@ -3732,9 +3731,8 @@ unsigned venc_dev::venc_flush( unsigned port)
     for (unsigned int i = 0; i < (sizeof(fd_list)/sizeof(fd_list[0])); i++) {
         cookie = fd_list[i];
         if (cookie != 0) {
-            if (!ioctl(input_extradata_info.m_ion_dev, ION_IOC_FREE, &cookie)) {
-                DEBUG_PRINT_HIGH("Freed handle = %u", cookie);
-            }
+            close(cookie);
+            DEBUG_PRINT_HIGH("Freed handle = %u", cookie);
             fd_list[i] = 0;
         }
     }
@@ -4321,7 +4319,7 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
     extra_idx = EXTRADATA_IDX(num_input_planes);
 
     if (extra_idx && (extra_idx < VIDEO_MAX_PLANES)) {
-        int extradata_index = venc_get_index_from_fd(input_extradata_info.m_ion_dev,fd);
+        int extradata_index = venc_get_index_from_fd(fd);
         if (extradata_index < 0 ) {
                 DEBUG_PRINT_ERROR("Extradata index calculation went wrong for fd = %d", fd);
                 return false;
@@ -4331,7 +4329,7 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
         plane[extra_idx].length = input_extradata_info.size;
         plane[extra_idx].m.userptr = (unsigned long) (input_extradata_info.uaddr + extradata_index * input_extradata_info.buffer_size);
 #ifdef USE_ION
-        plane[extra_idx].reserved[0] = input_extradata_info.ion.fd_ion_data.fd;
+        plane[extra_idx].reserved[0] = input_extradata_info.ion.ion_alloc_data.fd;
 #endif
         plane[extra_idx].reserved[1] = input_extradata_info.buffer_size * extradata_index;
         plane[extra_idx].reserved[2] = input_extradata_info.size;
@@ -4510,7 +4508,7 @@ bool venc_dev::venc_empty_batch(OMX_BUFFERHEADERTYPE *bufhdr, unsigned index)
 
             if (extra_idx && (extra_idx < VIDEO_MAX_PLANES)) {
                 int fd = plane[0].reserved[0];
-                int extradata_index = venc_get_index_from_fd(input_extradata_info.m_ion_dev, fd);
+                int extradata_index = venc_get_index_from_fd(fd);
                 if (extradata_index < 0) {
                     DEBUG_PRINT_ERROR("Extradata index calculation went wrong for fd = %d", fd);
                     return false;
@@ -4519,7 +4517,7 @@ bool venc_dev::venc_empty_batch(OMX_BUFFERHEADERTYPE *bufhdr, unsigned index)
                 plane[extra_idx].bytesused = 0;
                 plane[extra_idx].length = input_extradata_info.size;
                 plane[extra_idx].m.userptr = (unsigned long) (input_extradata_info.uaddr + extradata_index * input_extradata_info.buffer_size);
-                plane[extra_idx].reserved[0] = input_extradata_info.ion.fd_ion_data.fd;
+                plane[extra_idx].reserved[0] = input_extradata_info.ion.ion_alloc_data.fd;
                 plane[extra_idx].reserved[1] = input_extradata_info.buffer_size * extradata_index;
                 plane[extra_idx].reserved[2] = input_extradata_info.size;
                 plane[extra_idx].data_offset = 0;
@@ -4665,7 +4663,7 @@ bool venc_dev::venc_fill_buf(void *buffer, void *pmem_data_buf,unsigned index,un
         plane[extra_idx].length = output_extradata_info.buffer_size;
         plane[extra_idx].m.userptr = (unsigned long) (output_extradata_info.uaddr + index * output_extradata_info.buffer_size);
 #ifdef USE_ION
-        plane[extra_idx].reserved[0] = output_extradata_info.ion.fd_ion_data.fd;
+        plane[extra_idx].reserved[0] = output_extradata_info.ion.ion_alloc_data.fd;
 #endif
         plane[extra_idx].reserved[1] = output_extradata_info.buffer_size * index;
         plane[extra_idx].data_offset = 0;
@@ -4727,27 +4725,9 @@ bool venc_dev::venc_set_au_delimiter(OMX_BOOL enable)
     return true;
 }
 
-int venc_dev::venc_get_index_from_fd(OMX_U32 ion_fd, OMX_U32 buffer_fd)
+int venc_dev::venc_get_index_from_fd(OMX_U32 buffer_fd)
 {
     unsigned int cookie = buffer_fd;
-    struct ion_fd_data fdData;
-
-    memset(&fdData, 0, sizeof(fdData));
-    fdData.fd = buffer_fd;
-    if (ion_fd && !ioctl(ion_fd, ION_IOC_IMPORT, &fdData)) {
-        cookie = fdData.handle;
-        DEBUG_PRINT_HIGH("FD = %u imported handle = %u", fdData.fd, fdData.handle);
-    }
-
-    for (unsigned int i = 0; i < (sizeof(fd_list)/sizeof(fd_list[0])); i++) {
-        if (fd_list[i] == cookie) {
-            DEBUG_PRINT_HIGH("FD is present at index = %d", i);
-            if (ion_fd && !ioctl(ion_fd, ION_IOC_FREE, &fdData.handle)) {
-                DEBUG_PRINT_HIGH("freed handle = %u", cookie);
-            }
-            return i;
-        }
-    }
 
     for (unsigned int i = 0; i < (sizeof(fd_list)/sizeof(fd_list[0])); i++)
         if (fd_list[i] == 0) {
