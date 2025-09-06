@@ -1300,7 +1300,7 @@ class omx_vdec: public qc_omx_component
 #endif
                 unsigned char *pmem_baseaddress[MAX_COUNT];
                 int pmem_fd[MAX_COUNT];
-                OMX_ERRORTYPE cache_ops(unsigned int index, unsigned int cmd);
+                OMX_ERRORTYPE cache_ops(unsigned int index);
                 inline OMX_ERRORTYPE cache_clean_buffer(unsigned int index) {
                     return cache_ops(index);
                 }
