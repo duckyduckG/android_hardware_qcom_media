@@ -55,7 +55,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "media/hardware/VideoAPI.h"
 #include "media/hardware/HardwareAPI.h"
 #include <unordered_map>
-#include <media/msm_media_info.h>
+#include <vidc_legacy/media/msm_media_info.h>
 #include <list>
 
 #include <linux/msm_ion.h>
@@ -120,7 +120,7 @@ extern "C" {
 #include "OMX_VideoExt.h"
 #include "OMX_IndexExt.h"
 #include "qc_omx_component.h"
-#include "media/msm_vidc_utils.h"
+#include "vidc_legacy/media/msm_vidc_utils.h"
 #include "frameparser.h"
 #include "extra_data_handler.h"
 #include "ts_parser.h"

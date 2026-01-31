@@ -39,7 +39,7 @@
 #include <dlfcn.h>
 #include <string.h>
 #include <errno.h>
-#include <media/msm_media_info.h>
+#include <vidc_legacy/media/msm_media_info.h>
 #include <gralloc_priv.h>
 #include <unordered_map>
 
