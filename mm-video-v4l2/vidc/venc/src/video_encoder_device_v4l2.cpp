@@ -34,14 +34,14 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 #include "video_encoder_device_v4l2.h"
 #include "omx_video_encoder.h"
-#include "media/msm_vidc_utils.h"
+#include "vidc_legacy/media/msm_vidc_utils.h"
 #ifdef USE_ION
 #include <linux/msm_ion.h>
 #endif
 #include<linux/v4l2-controls.h>
 
 #include <math.h>
-#include <media/msm_media_info.h>
+#include <vidc_legacy/media/msm_media_info.h>
 #include <cutils/properties.h>
 #include <media/hardware/HardwareAPI.h>
 
@@ -2480,7 +2480,7 @@ bool venc_dev::venc_set_param(void *paramData, OMX_INDEXTYPE index)
                         return false;
                     }
 
-                    if (!venc_set_multislice_cfg(V4L2_MPEG_VIDEO_MULTI_SICE_MODE_MAX_MB, pParam->nSliceHeaderSpacing)) {
+                    if (!venc_set_multislice_cfg(V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_MB, pParam->nSliceHeaderSpacing)) {
                         DEBUG_PRINT_ERROR("WARNING: Unsuccessful in updating slice_config");
                         return false;
                     }
@@ -5043,7 +5043,7 @@ bool venc_dev::venc_set_slice_delivery_mode(OMX_U32 enable)
         control.value = 1;
         DEBUG_PRINT_LOW("Set slice_delivery_mode: %d", control.value);
 
-        if (multislice.mslice_mode == V4L2_MPEG_VIDEO_MULTI_SICE_MODE_MAX_MB && m_sVenc_cfg.codectype == V4L2_PIX_FMT_H264) {
+        if (multislice.mslice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_MB && m_sVenc_cfg.codectype == V4L2_PIX_FMT_H264) {
             if (ioctl(m_nDriver_fd, VIDIOC_S_CTRL, &control)) {
                 DEBUG_PRINT_ERROR("Request for setting slice delivery mode failed");
                 return false;
@@ -5664,14 +5664,14 @@ bool venc_dev::venc_set_multislice_cfg(OMX_U32 nSlicemode, OMX_U32 nSlicesize)
         nSlicesize = 0;
     }
 
-    if (nSlicemode == V4L2_MPEG_VIDEO_MULTI_SICE_MODE_MAX_MB) {
+    if (nSlicemode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_MB) {
         if (!venc_validate_range(V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MAX_MB, nSlicesize)) {
             DEBUG_PRINT_ERROR("Invalid settings, hardware doesn't support %u as slicesize", nSlicesize);
             return false;
         }
         slice_id = V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MAX_MB;
 
-    } else if (nSlicemode == V4L2_MPEG_VIDEO_MULTI_SICE_MODE_MAX_BYTES) {
+    } else if (nSlicemode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_BYTES) {
         if (!venc_validate_range(V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MAX_BYTES, nSlicesize)) {
             DEBUG_PRINT_ERROR("Invalid settings, hardware doesn't support %u as slicesize", nSlicesize);
             return false;
@@ -5786,7 +5786,7 @@ bool venc_dev::venc_set_error_resilience(OMX_VIDEO_PARAM_ERRORCORRECTIONTYPE* er
         resynchMarkerSpacingBytes = ALIGN(resynchMarkerSpacingBytes, 8) >> 3;
     }
 
-    status = venc_set_multislice_cfg(V4L2_MPEG_VIDEO_MULTI_SICE_MODE_MAX_BYTES, resynchMarkerSpacingBytes);
+    status = venc_set_multislice_cfg(V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_BYTES, resynchMarkerSpacingBytes);
 
     return status;
 }
