@@ -22,6 +22,7 @@ cc_library_shared {
         "-DUSE_NATIVE_HANDLE_SOURCE",
     ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
         "bengal": ["-U_UBWC_"],
+        "msmnile": ["-DVIDC_NV12_ALIGN"],
         default: [],
     }),
 

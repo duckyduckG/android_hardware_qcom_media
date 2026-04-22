@@ -39,7 +39,11 @@
 #include <dlfcn.h>
 #include <string.h>
 #include <errno.h>
+#ifdef VIDC_NV12_ALIGN
+#include <media/msm_media_info_msmnile.h>
+#else
 #include <media/msm_media_info.h>
+#endif
 #include <gralloc_priv.h>
 #include <unordered_map>
 

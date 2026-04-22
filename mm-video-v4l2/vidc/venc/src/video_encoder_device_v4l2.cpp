@@ -41,7 +41,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include<linux/v4l2-controls.h>
 
 #include <math.h>
+#ifdef VIDC_NV12_ALIGN
+#include <media/msm_media_info_msmnile.h>
+#else
 #include <media/msm_media_info.h>
+#endif
 #include <cutils/properties.h>
 #include <media/hardware/HardwareAPI.h>
 
