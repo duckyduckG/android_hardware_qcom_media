@@ -55,7 +55,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "media/hardware/VideoAPI.h"
 #include "media/hardware/HardwareAPI.h"
 #include <unordered_map>
+#ifdef VIDC_LEGACY_ALIGN
+#include <media/msm_media_info_msmnile.h>
+#else
 #include <media/msm_media_info.h>
+#endif
 #include <OMX_Core.h>
 #include <list>
 

@@ -11,7 +11,10 @@ cc_library_shared {
 
     cflags: [
         "-Werror",
-    ],
+    ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
+        "msmnile": ["-DVIDC_LEGACY_ALIGN"],
+        default: [],
+    }),
 
     header_libs: [
         "display_headers",

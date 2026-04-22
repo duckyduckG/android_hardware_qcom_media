@@ -23,6 +23,7 @@ cc_library_shared {
         "-DUSE_ION",
     ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
         "bengal": ["-U_UBWC_"],
+        "msmnile": ["-DVIDC_LEGACY_ALIGN"],
         default: [],
     }),
 
