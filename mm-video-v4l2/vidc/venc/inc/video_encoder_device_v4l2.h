@@ -44,11 +44,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "omx_video_encoder.h"
 #include "vidc_common.h"
 #include <linux/videodev2.h>
-#ifdef VENUS_SDM845_HEADER
-#include "media/msm_vidc_utils_sdm845.h"
-#else
-#include "media/msm_vidc_utils.h"
-#endif
+#include "media/msm_vidc_utils_msmnile.h"
 #include <poll.h>
 #include <list>
 #include "color_metadata.h"

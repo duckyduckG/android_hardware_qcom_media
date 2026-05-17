@@ -34,11 +34,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 #include "video_encoder_device_v4l2.h"
 #include "omx_video_encoder.h"
-#ifdef VENUS_SDM845_HEADER
-#include "media/msm_vidc_utils_sdm845.h"
-#else
-#include "media/msm_vidc_utils.h"
-#endif
+#include "media/msm_vidc_utils_msmnile.h"
 #ifdef USE_ION
 #include <linux/msm_ion.h>
 #endif

@@ -120,11 +120,7 @@ extern "C" {
 #include "OMX_VideoExt.h"
 #include "OMX_IndexExt.h"
 #include "qc_omx_component.h"
-#ifdef VENUS_SDM845_HEADER
-#include "media/msm_vidc_utils_sdm845.h"
-#else
-#include "media/msm_vidc_utils.h"
-#endif
+#include "media/msm_vidc_utils_msmnile.h"
 #include "frameparser.h"
 #include "extra_data_handler.h"
 #include "ts_parser.h"

@@ -20,7 +20,6 @@ cc_library_shared {
     ] + select(soong_config_variable("ANDROID", "target_board_platform"), {
         "sdm845": [
         "-DVENUS_USES_LEGACY_MISR_INFO",
-        "-DVENUS_SDM845_HEADER",
         ],
         default: [],
     }),
